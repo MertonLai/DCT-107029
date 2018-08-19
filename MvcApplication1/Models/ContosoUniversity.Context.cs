@@ -30,5 +30,6 @@ namespace MvcApplication1.Models
         public virtual DbSet<Enrollment> Enrollment { get; set; }
         public virtual DbSet<OfficeAssignment> OfficeAssignment { get; set; }
         public virtual DbSet<Person> Person { get; set; }
+
     }
 }

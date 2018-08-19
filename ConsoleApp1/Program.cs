@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Data.Entity;
 
 namespace ConsoleApp1
 {
@@ -15,13 +16,48 @@ namespace ConsoleApp1
         {
             using (var db = new ContosoUniversityEntities())
             {
-                QueryCourse(db);
 
-                InsertDepartment(db);
+                db.Database.Log = Console.WriteLine;
 
-                UpdateDepartment(db);
+                #region 延遲載入設定
 
-                RemoveDepartment(db);
+                //db.Configuration.LazyLoadingEnabled = false;
+
+                // 關閉代理屬性
+                //db.Configuration.ProxyCreationEnabled = false;
+
+                #endregion 延遲載入設定
+
+                db.Department.Add(new Department() {
+                    Budget = 100,
+                    Name = "TEST",
+                    StartDate = DateTime.Now.AddDays(+2)
+                });
+
+                db.SaveChanges();
+
+                var department = db.Department.Include(c => c.Course).AsNoTracking();
+
+                foreach (var dept in department) {
+                    Console.WriteLine(dept.Name);
+                    foreach (var _cou in dept.Course) {
+                        Console.WriteLine(string.Format("\t{0}-{1}", _cou.CourseID, _cou.Title));
+
+                    }
+
+                }
+
+
+                //QueryCourse(db);
+
+                //InsertDepartment(db);
+
+                //UpdateDepartment(db);
+
+                //RemoveDepartment(db);
+
+                Console.WriteLine("請輸入任意鍵繼續˙˙˙˙˙");
+                Console.ReadKey();
             }
         }
 

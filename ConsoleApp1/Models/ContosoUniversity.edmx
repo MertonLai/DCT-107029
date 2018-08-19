@@ -4,7 +4,7 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-      <Schema Namespace="ContosoUniversityModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+    <Schema Namespace="ContosoUniversityModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
         <EntityType Name="Course">
           <Key>
             <PropertyRef Name="CourseID" />
@@ -13,6 +13,7 @@
           <Property Name="Title" Type="nvarchar" MaxLength="50" />
           <Property Name="Credits" Type="int" Nullable="false" />
           <Property Name="DepartmentID" Type="int" Nullable="false" />
+          <Property Name="CreatedOn" Type="datetime" Nullable="false" StoreGeneratedPattern="Computed" />
         </EntityType>
         <EntityType Name="CourseInstructor">
           <Key>
@@ -32,6 +33,8 @@
           <Property Name="StartDate" Type="datetime" Nullable="false" />
           <Property Name="InstructorID" Type="int" />
           <Property Name="RowVersion" Type="timestamp" StoreGeneratedPattern="Computed" Nullable="false" />
+          <Property Name="CreatedOn2" Type="datetime" Nullable="false" StoreGeneratedPattern="Computed" />
+          <Property Name="ModifiedOn" Type="datetime" Nullable="false" />
         </EntityType>
         <EntityType Name="Enrollment">
           <Key>
@@ -154,6 +157,24 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Function Name="Department_Delete" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="DepartmentID" Type="int" Mode="In" />
+          <Parameter Name="RowVersion_Original" Type="timestamp" Mode="In" />
+        </Function>
+        <Function Name="Department_Insert" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="Name" Type="nvarchar" Mode="In" />
+          <Parameter Name="Budget" Type="money" Mode="In" />
+          <Parameter Name="StartDate" Type="datetime" Mode="In" />
+          <Parameter Name="InstructorID" Type="int" Mode="In" />
+        </Function>
+        <Function Name="Department_Update" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="DepartmentID" Type="int" Mode="In" />
+          <Parameter Name="Name" Type="nvarchar" Mode="In" />
+          <Parameter Name="Budget" Type="money" Mode="In" />
+          <Parameter Name="StartDate" Type="datetime" Mode="In" />
+          <Parameter Name="InstructorID" Type="int" Mode="In" />
+          <Parameter Name="RowVersion_Original" Type="timestamp" Mode="In" />
+        </Function>
         <EntityContainer Name="ContosoUniversityModelStoreContainer">
           <EntitySet Name="Course" EntityType="Self.Course" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="CourseInstructor" EntityType="Self.CourseInstructor" Schema="dbo" store:Type="Tables" />
@@ -190,8 +211,7 @@
             <End Role="OfficeAssignment" EntitySet="OfficeAssignment" />
           </AssociationSet>
         </EntityContainer>
-      </Schema>
-    </edmx:StorageModels>
+      </Schema></edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
       <Schema Namespace="ContosoUniversityModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
@@ -206,6 +226,7 @@
           <NavigationProperty Name="Department" Relationship="Self.FK_dbo_Course_dbo_Department_DepartmentID" FromRole="Course" ToRole="Department" />
           <NavigationProperty Name="Enrollment" Relationship="Self.FK_dbo_Enrollment_dbo_Course_CourseID" FromRole="Course" ToRole="Enrollment" />
           <NavigationProperty Name="Person" Relationship="Self.CourseInstructor" FromRole="Course" ToRole="Person" />
+          <Property Name="CreatedOn" Type="DateTime" Nullable="false" Precision="3" annotation:StoreGeneratedPattern="Computed" />
         </EntityType>
         <EntityType Name="Department">
           <Key>
@@ -216,9 +237,11 @@
           <Property Name="Budget" Type="Decimal" Precision="19" Scale="4" Nullable="false" />
           <Property Name="StartDate" Type="DateTime" Nullable="false" Precision="3" />
           <Property Name="InstructorID" Type="Int32" />
-          <Property Name="RowVersion" Type="Binary" MaxLength="8" FixedLength="true" Nullable="false" annotation:StoreGeneratedPattern="Computed" />
           <NavigationProperty Name="Course" Relationship="Self.FK_dbo_Course_dbo_Department_DepartmentID" FromRole="Department" ToRole="Course" />
           <NavigationProperty Name="Person" Relationship="Self.FK_dbo_Department_dbo_Instructor_InstructorID" FromRole="Department" ToRole="Person" />
+          <Property Name="RowVersion" Type="Binary" Nullable="false" MaxLength="8" FixedLength="true" annotation:StoreGeneratedPattern="Computed" ConcurrencyMode="Fixed" />
+          <Property Name="CreatedOn2" Type="DateTime" Nullable="false" Precision="3" annotation:StoreGeneratedPattern="Computed" />
+          <Property Name="ModifiedOn" Type="DateTime" Nullable="false" Precision="3" />
         </EntityType>
         <EntityType Name="Enrollment">
           <Key>
@@ -354,7 +377,29 @@
             <End Role="Course" EntitySet="Course" />
             <End Role="Person" EntitySet="Person" />
           </AssociationSet>
+          <FunctionImport Name="Department_Insert" ReturnType="Collection(ContosoUniversityModel.Department_Insert_Result)">
+            <Parameter Name="Name" Mode="In" Type="String" />
+            <Parameter Name="Budget" Mode="In" Type="Decimal" />
+            <Parameter Name="StartDate" Mode="In" Type="DateTime" />
+            <Parameter Name="InstructorID" Mode="In" Type="Int32" />
+          </FunctionImport>
+          <FunctionImport Name="Department_Update" ReturnType="Collection(Binary)">
+            <Parameter Name="DepartmentID" Mode="In" Type="Int32" />
+            <Parameter Name="Name" Mode="In" Type="String" />
+            <Parameter Name="Budget" Mode="In" Type="Decimal" />
+            <Parameter Name="StartDate" Mode="In" Type="DateTime" />
+            <Parameter Name="InstructorID" Mode="In" Type="Int32" />
+            <Parameter Name="RowVersion_Original" Mode="In" Type="Binary" />
+          </FunctionImport>
+          <FunctionImport Name="Department_Delete">
+            <Parameter Name="DepartmentID" Mode="In" Type="Int32" />
+            <Parameter Name="RowVersion_Original" Mode="In" Type="Binary" />
+          </FunctionImport>
         </EntityContainer>
+        <ComplexType Name="Department_Insert_Result">
+          <Property Type="Int32" Name="DepartmentID" Nullable="false" />
+          <Property Type="Binary" Name="RowVersion" Nullable="false" MaxLength="8" />
+        </ComplexType>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -364,6 +409,7 @@
           <EntitySetMapping Name="Course">
             <EntityTypeMapping TypeName="ContosoUniversityModel.Course">
               <MappingFragment StoreEntitySet="Course">
+                <ScalarProperty Name="CreatedOn" ColumnName="CreatedOn" />
                 <ScalarProperty Name="CourseID" ColumnName="CourseID" />
                 <ScalarProperty Name="Title" ColumnName="Title" />
                 <ScalarProperty Name="Credits" ColumnName="Credits" />
@@ -374,12 +420,14 @@
           <EntitySetMapping Name="Department">
             <EntityTypeMapping TypeName="ContosoUniversityModel.Department">
               <MappingFragment StoreEntitySet="Department">
+                <ScalarProperty Name="ModifiedOn" ColumnName="ModifiedOn" />
+                <ScalarProperty Name="CreatedOn2" ColumnName="CreatedOn2" />
+                <ScalarProperty Name="RowVersion" ColumnName="RowVersion" />
                 <ScalarProperty Name="DepartmentID" ColumnName="DepartmentID" />
                 <ScalarProperty Name="Name" ColumnName="Name" />
                 <ScalarProperty Name="Budget" ColumnName="Budget" />
                 <ScalarProperty Name="StartDate" ColumnName="StartDate" />
                 <ScalarProperty Name="InstructorID" ColumnName="InstructorID" />
-                <ScalarProperty Name="RowVersion" ColumnName="RowVersion" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
@@ -421,6 +469,16 @@
               <ScalarProperty Name="ID" ColumnName="InstructorID" />
             </EndProperty>
           </AssociationSetMapping>
+          <FunctionImportMapping FunctionImportName="Department_Insert" FunctionName="ContosoUniversityModel.Store.Department_Insert">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="ContosoUniversityModel.Department_Insert_Result">
+                <ScalarProperty Name="DepartmentID" ColumnName="DepartmentID" />
+                <ScalarProperty Name="RowVersion" ColumnName="RowVersion" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="Department_Update" FunctionName="ContosoUniversityModel.Store.Department_Update" />
+          <FunctionImportMapping FunctionImportName="Department_Delete" FunctionName="ContosoUniversityModel.Store.Department_Delete" />
         </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>
